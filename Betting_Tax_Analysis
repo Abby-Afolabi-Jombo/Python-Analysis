@@ -1,0 +1,148 @@
+#-- Write a python script that reads in the given data (same shape as seen in T1) from a localhost connection, 
+#-- prints out a few stats about the dataset, cleans it if necessary and at the end prints out some summary statistics on the profitability of the company. 
+
+
+#--- 1) WRITE A PYTHON SCRIPT TO READ THE GIVEN DATA
+
+import pyodbc
+
+connection = pyodbc.connect('DRIVER={SQL Server Native Client 11.0};SERVER= MSSQLOLAP;DATABASE=master;UID=staging;PWD=***')
+cursor=connection.cursor()
+cursor.execute("SELECT * FROM Betting_tax")
+rows=cursor.fetchall()
+
+for data in rows:
+    print(data)
+
+
+#--- 2) PRINT OUT A FEW STATISTICS ABOUT THE DATASET
+
+import pyodbc
+#import pandas as pd
+
+connection = pyodbc.connect('DRIVER={SQL Server Native Client 11.0};SERVER= MSSQLOLAP;DATABASE=master;UID=staging;PWD=***')
+#cursor.execute("SELECT * FROM Betting_tax")
+#rows=cursor.fetchall()
+
+BetID_query = """
+SELECT
+    COUNT(DISTINCT BetID) AS Count,
+    MIN(BetID) AS Min,
+    MAX(BetID) AS Max
+FROM Betting_tax
+"""
+
+PlyerId_query = """
+SELECT
+    COUNT(DISTINCT PlyerId) AS Count,
+    MIN(PlyerId) AS Min,
+    MAX(PlyerId) AS Max
+FROM Betting_tax
+"""
+
+productid_query = """
+SELECT
+    COUNT(DISTINCT productId) AS Count
+FROM Betting_tax
+"""
+
+betting_date_query = """
+SELECT
+    MIN(betting_date) AS Earliest,
+    MAX(betting_date) AS Latest
+   FROM Betting_tax
+"""
+
+BetAmt_query = """
+SELECT
+    SUM(BetAmt) AS Total,
+    AVG(BetAmt) AS Average,
+    MIN(BetAmt) AS Min,
+    MAX(BetAmt) AS Max,
+    STDEV(BetAmt) AS StandardDeviation
+FROM Betting_tax
+"""
+cursor=connection.cursor()
+
+cursor.execute(BetID_query)
+BetID_results = cursor.fetchone()
+
+cursor.execute(PlyerId_query)
+PlyerId_results = cursor.fetchone()
+
+cursor.execute(productid_query)
+productid_results = cursor.fetchone()
+
+cursor.execute(betting_date_query)
+betting_date_results = cursor.fetchone()
+
+cursor.execute(BetAmt_query)
+BetAmt_results = cursor.fetchone()
+
+cursor.close()
+
+print("Betting ID Statistics:")
+print("Count:", BetID_results.Count)
+print("Min:", BetID_results.Min)
+print("Max:", BetID_results.Max)
+
+print("Player ID Statistics:")
+print("Count:", PlyerId_results.Count)
+print("Min:", PlyerId_results.Min)
+print("Max:", PlyerId_results.Max)
+
+print("Product ID Statistics:")
+print("Count:", productid_results.Count)
+
+print("Betting Date Statistics:")
+print("Earliest:", betting_date_results.Earliest)
+print("Latest:", betting_date_results.Latest)
+
+print("Betting Amount Statistics:")
+print("Total:", BetAmt_results.Total)
+print("Average:", BetAmt_results.Average)
+print("Min:", BetAmt_results.Min)
+print("Max:", BetAmt_results.Max)
+print("Standard Deviation:", BetAmt_results.StandardDeviation)
+
+#--- 3) PRINT OUT SOME SUMMARY STATISTICS ON THE PROFITABILITY OF THE COMPANY
+
+import pyodbc
+
+connection = pyodbc.connect('DRIVER={SQL Server Native Client 11.0};SERVER= ABM-OLAP01\MSSQLOLAP;DATABASE=master;UID=staging_user;PWD=Nigeria@123')
+cursor=connection.cursor()
+
+
+sql_query = "SELECT BetAmt,BonusBetAmt,WinAmt,BonusWinAmt,TaxAmt FROM Betting_tax"
+
+cursor.execute(sql_query)
+rows = cursor.fetchall()
+
+cursor.close()
+connection.close()
+
+# Financial data
+betting_amounts = [row[0] for row in rows]
+bonus_betting_amounts = [row[1] for row in rows]
+winning_amounts = [row[2] for row in rows]
+bonus_winning_amounts = [row[3] for row in rows]
+tax_amounts = [row[4] for row in rows]
+
+# Profitability metrics
+total_betting_amount = sum(betting_amounts)
+total_bonus_betting_amount = sum(bonus_betting_amounts)
+total_winning_amount = sum(winning_amounts)
+total_bonus_winning_amount = sum(bonus_winning_amounts)
+total_tax_amount = sum(tax_amounts)
+
+net_profit = (total_winning_amount + total_bonus_winning_amount + total_tax_amount) - (total_betting_amount + total_bonus_betting_amount )
+profit_margin = (net_profit / (total_betting_amount + total_bonus_betting_amount)) * 100
+
+print("Profitability Statistics:")
+print("Total Betting Amount:", total_betting_amount)
+print("Total Bonus Betting Amount:", total_bonus_betting_amount)
+print("Total Winning Amount:", total_winning_amount)
+print("Total Bonus Winning Amount:", total_bonus_winning_amount)
+print("Total Tax Amount:", total_tax_amount)
+print("Net Profit:", net_profit)
+print("Profit Margin (%):", profit_margin)
